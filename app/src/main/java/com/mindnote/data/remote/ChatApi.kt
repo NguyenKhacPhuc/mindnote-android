@@ -1,0 +1,43 @@
+package com.mindnote.data.remote
+
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.plugins.sse.sse
+import io.ktor.client.request.get
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
+import io.ktor.http.contentType
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+
+class ChatApi(private val client: HttpClient) {
+
+    suspend fun messages(conversationId: String): List<ChatMessageDto> =
+        client.get("conversations/$conversationId/messages").body()
+
+    fun stream(conversationId: String, text: String): Flow<StreamEvent> = channelFlow {
+        client.sse(
+            urlString = "conversations/$conversationId/stream",
+            request = {
+                method = HttpMethod.Post
+                contentType(ContentType.Application.Json)
+                setBody(SendMessageDto(text))
+            },
+        ) {
+            incoming.collect { event ->
+                when (event.event) {
+                    "token" -> send(StreamEvent.Token(event.data.orEmpty()))
+                    "done" -> send(StreamEvent.Done)
+                    "error" -> send(StreamEvent.Error(event.data.orEmpty()))
+                }
+            }
+        }
+    }
+}
+
+sealed interface StreamEvent {
+    data class Token(val text: String) : StreamEvent
+    data object Done : StreamEvent
+    data class Error(val message: String) : StreamEvent
+}
