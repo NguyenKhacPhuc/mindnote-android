@@ -53,11 +53,9 @@
     <string name="capture_body_placeholder">Start writing, paste a link, or tap the mic to speak…</string>
     <string name="capture_add_tag">+ Add tag</string>
     <string name="capture_untitled_note">Untitled note</string>
-    <string name="capture_ai_tip">MindNote will auto-generate a title, tags, and a summary once you start writing.</string>
     <string name="capture_tag_dialog_title">New tag</string>
     <string name="capture_tag_dialog_placeholder">e.g. reading</string>
     <string name="capture_tag_remove_cd">Remove tag</string>
-    <string name="capture_attach_link_cd">Attach link</string>
 
     <!-- Chat -->
     <string name="chat_default_title">Chat</string>

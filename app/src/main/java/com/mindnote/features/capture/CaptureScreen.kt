@@ -1,7 +1,6 @@
 package com.mindnote.features.capture
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,9 +17,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -157,62 +154,6 @@ fun CaptureScreen(
                     },
                 )
             }
-        }
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .background(MindNoteTheme.colors.bg),
-        ) {
-            Box(modifier = Modifier.padding(horizontal = 20.dp)) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MindNoteTheme.colors.surface)
-                        .border(1.dp, MindNoteTheme.colors.border, RoundedCornerShape(12.dp))
-                        .padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.AutoAwesome,
-                        contentDescription = null,
-                        tint = MindNoteTheme.colors.accent,
-                        modifier = Modifier.size(16.dp),
-                    )
-                    Text(
-                        text = stringResource(R.string.capture_ai_tip),
-                        style = MindNoteTheme.typography.caption.copy(lineHeight = 18.sp),
-                        color = MindNoteTheme.colors.textMuted,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
-            VSpace(12)
-            HairlineDivider()
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clickable { vm.send(CaptureIntent.AttachLink) },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Link,
-                        contentDescription = stringResource(R.string.capture_attach_link_cd),
-                        tint = MindNoteTheme.colors.textMuted,
-                        modifier = Modifier.size(22.dp),
-                    )
-                }
-            }
-            VSpace(24)
         }
 
         val tagInput = state.tagInput

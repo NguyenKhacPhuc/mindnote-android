@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -16,6 +17,9 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 
 class UserPrefs(context: Context) {
     private val appContext = context.applicationContext
+
+    @Volatile
+    private var cachedDeviceId: String? = null
 
     val usernameFlow: Flow<String> = appContext.dataStore.data.map { it[USERNAME].orEmpty() }
 
@@ -32,8 +36,27 @@ class UserPrefs(context: Context) {
     /** Synchronous read for cold-start nav routing. */
     fun isOnboardedBlocking(): Boolean = runBlocking { onboardedFlow.first() }
 
+    /**
+     * Per-install identifier, generated once on first call and persisted forever (until the user
+     * clears app data / uninstalls). Sent as the `X-Device-Id` header so the backend can scope
+     * notes, favorites, and conversations to this install.
+     */
+    fun deviceIdBlocking(): String {
+        cachedDeviceId?.let { return it }
+        val id = runBlocking {
+            val existing = appContext.dataStore.data.map { it[DEVICE_ID] }.first()
+            if (!existing.isNullOrBlank()) return@runBlocking existing
+            val fresh = UUID.randomUUID().toString()
+            appContext.dataStore.edit { it[DEVICE_ID] = fresh }
+            fresh
+        }
+        cachedDeviceId = id
+        return id
+    }
+
     private companion object {
         val USERNAME = stringPreferencesKey("username")
         val ONBOARDED = booleanPreferencesKey("onboarded")
+        val DEVICE_ID = stringPreferencesKey("device_id")
     }
 }

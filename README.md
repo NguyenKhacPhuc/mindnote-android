@@ -54,7 +54,7 @@ Or just click ▶ in Android Studio.
 
 ## Architecture
 
-The app is a single Gradle module organised by layer + feature. The UI layer reads exclusively from Room flows; network calls mutate Room, never the UI state directly. This keeps the app responsive when offline and avoids UI flicker while requests are in flight.
+The app is a single Gradle module organized by layer + feature. The UI layer reads exclusively from Room flows; network calls mutate Room, never the UI state directly. This keeps the app responsive when offline and avoids UI flicker while requests are in flight.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -110,21 +110,6 @@ Every feature follows the same shape:
 - **State** — immutable data class, collected via `vm.state.collectAsStateWithLifecycle()`.
 - **Intent** — sealed interface covering user actions. `vm.send(intent)` routes to `handle(intent)`.
 - **Effect** — sealed interface for one‑shot UI side effects (navigation, snackbar). Collected once via `LaunchedEffect(Unit) { vm.effects.collect { … } }`.
-
-Example — Note detail's delete flow:
-
-```
-UI taps trash icon
- → vm.send(NoteDetailIntent.RequestDelete)
- → state.confirmingDelete = true
- → dialog renders
- → user taps Delete
- → vm.send(NoteDetailIntent.ConfirmDelete)
- → isDeleting = true, safeApiCall { notesRepository.delete(noteId) }
- → on Success: emit(NoteDetailEffect.NavigateBack)
- → on Error:   emit(NoteDetailEffect.ShowError(msg))  → snackbar
- → isDeleting = false
-```
 
 ### Offline‑first pattern
 
@@ -184,7 +169,3 @@ The app is paired with a Ktor + Postgres backend (separate repo/project) deploye
 The SSE endpoint streams Claude Haiku 4.5 completions with the user's notes injected as system context for retrieval‑augmented chat.
 
 ---
-
-## License
-
-Personal / portfolio project.

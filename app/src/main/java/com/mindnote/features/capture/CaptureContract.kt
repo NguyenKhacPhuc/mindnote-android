@@ -12,7 +12,6 @@ sealed interface CaptureIntent : UiIntent {
     data object ConfirmTag : CaptureIntent
     data object CancelTag : CaptureIntent
     data class RemoveTag(val tag: String) : CaptureIntent
-    data object AttachLink : CaptureIntent
     data object Cancel : CaptureIntent
     data object Save : CaptureIntent
 }

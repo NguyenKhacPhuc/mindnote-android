@@ -25,6 +25,7 @@ import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.request.header
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.sse.SSE
@@ -59,6 +60,7 @@ val appModule = module {
     single { get<MindNoteDatabase>().favoriteDao() }
 
     single {
+        val userPrefs = get<UserPrefs>()
         HttpClient(OkHttp) {
             expectSuccess = true
             install(ContentNegotiation) {
@@ -75,6 +77,7 @@ val appModule = module {
             defaultRequest {
                 url(BuildConfig.BASE_URL)
                 contentType(ContentType.Application.Json)
+                header("X-Device-Id", userPrefs.deviceIdBlocking())
             }
         }
     }

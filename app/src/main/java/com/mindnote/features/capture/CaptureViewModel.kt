@@ -34,7 +34,6 @@ class CaptureViewModel(
 
             CaptureIntent.CancelTag -> setState { copy(tagInput = null) }
             is CaptureIntent.RemoveTag -> setState { copy(tags = tags - intent.tag) }
-            CaptureIntent.AttachLink -> Unit
             CaptureIntent.Cancel -> emit(CaptureEffect.Dismiss)
             CaptureIntent.Save -> {
                 val s = currentState
