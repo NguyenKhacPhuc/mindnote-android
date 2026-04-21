@@ -6,6 +6,7 @@ import com.mindnote.domain.model.SuggestedPrompt
 import com.mindnote.domain.repository.NotesRepository
 import com.mindnote.domain.repository.UserRepository
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.time.LocalTime
 
@@ -33,19 +34,16 @@ class HomeViewModel(
             }
         }
         viewModelScope.launch {
-            notesRepository.notes.collectLatest { all ->
-                val sorted = all.sortedByDescending { it.date }
-                setState {
-                    copy(
-                        recents = sorted.take(3),
-                        summary = "You have ${all.size} notes.",
-                    )
-                }
+            combine(
+                notesRepository.observeRecent(limit = 3),
+                notesRepository.observeCount(),
+            ) { recents, count -> recents to count }.collectLatest { (recents, count) ->
+                setState { copy(recents = recents, summary = "You have $count notes.") }
             }
         }
         viewModelScope.launch {
             setState { copy(isSyncing = true) }
-            runCatching { notesRepository.refresh() }
+            runCatching { notesRepository.syncFirstPage() }
             setState { copy(isSyncing = false) }
         }
     }

@@ -16,8 +16,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -53,6 +55,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import com.mindnote.R
 import com.mindnote.design.EmptyState
 import com.mindnote.design.HairlineDivider
@@ -77,6 +83,9 @@ fun NotesScreen(
     vm: NotesViewModel = koinViewModel(),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
+    val notes = vm.notesPager.collectAsLazyPagingItems()
+    val isInitialLoading = notes.loadState.refresh is LoadState.Loading && notes.itemCount == 0
+    val isEmpty = notes.loadState.refresh is LoadState.NotLoading && notes.itemCount == 0
 
     val snackbar = MindNoteTheme.snackbar
     LaunchedEffect(Unit) {
@@ -90,18 +99,23 @@ fun NotesScreen(
         }
     }
 
+    val columns = responsiveColumns()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MindNoteTheme.colors.bg)
             .navigationBarsPadding(),
     ) {
-        LazyColumn(
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(columns),
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(top = 44.dp, start = 20.dp, end = 20.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item {
+            // Header, filter tabs, divider, tag rail all span the full grid width.
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 VSpace(4)
                 if (state.isSearching) {
                     SearchBar(
@@ -127,7 +141,7 @@ fun NotesScreen(
                     }
                 }
             }
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 VSpace(4)
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     NoteFilter.values().forEach { filter ->
@@ -139,10 +153,8 @@ fun NotesScreen(
                     }
                 }
             }
-            item {
-                HairlineDivider()
-            }
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) { HairlineDivider() }
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 VSpace(4)
                 RowWithSpaceBetween {
                     LazyRow(
@@ -155,16 +167,16 @@ fun NotesScreen(
                             }
                         }
                     }
-                    TrackedCaps(stringResource(R.string.notes_count_suffix, state.notes.size))
+                    TrackedCaps(stringResource(R.string.notes_count_suffix, notes.itemCount))
                 }
             }
-            if (state.notes.isEmpty() && state.isSyncing) {
-                item {
+            if (isInitialLoading) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     VSpace(40)
                     LoadingIndicator()
                 }
-            } else if (state.notes.isEmpty()) {
-                item {
+            } else if (isEmpty) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     VSpace(40)
                     val isFavoritesTab = state.filter == NoteFilter.Favorites
                     EmptyState(
@@ -182,13 +194,23 @@ fun NotesScreen(
                     )
                 }
             } else {
-                items(state.notes) { note ->
+                items(
+                    count = notes.itemCount,
+                    key = notes.itemKey { it.id },
+                    contentType = notes.itemContentType { "note" },
+                ) { index ->
+                    val note = notes[index] ?: return@items
                     NoteCard(
                         note = note,
                         isFavorite = note.id in state.favoriteIds,
                         onClick = { vm.send(NotesIntent.OpenNote(note.id)) },
                         onToggleFavorite = { vm.send(NotesIntent.ToggleFavorite(note.id)) },
                     )
+                }
+                if (notes.loadState.append is LoadState.Loading) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        LoadingIndicator()
+                    }
                 }
             }
         }
@@ -198,6 +220,19 @@ fun NotesScreen(
             onCapture = { vm.send(NotesIntent.OpenCapture) },
             onChat = onOpenChat,
         )
+    }
+}
+
+@OptIn(androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi::class)
+@Composable
+private fun responsiveColumns(): Int {
+    val activity = androidx.compose.ui.platform.LocalContext.current as? android.app.Activity
+        ?: return 1
+    val windowSize = androidx.compose.material3.windowsizeclass.calculateWindowSizeClass(activity)
+    return when (windowSize.widthSizeClass) {
+        androidx.compose.material3.windowsizeclass.WindowWidthSizeClass.Compact -> 1
+        androidx.compose.material3.windowsizeclass.WindowWidthSizeClass.Medium -> 2
+        else -> 3
     }
 }
 

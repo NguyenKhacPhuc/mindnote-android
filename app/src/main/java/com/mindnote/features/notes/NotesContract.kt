@@ -3,7 +3,6 @@ package com.mindnote.features.notes
 import com.mindnote.core.mvi.UiEffect
 import com.mindnote.core.mvi.UiIntent
 import com.mindnote.core.mvi.UiState
-import com.mindnote.domain.model.Note
 import com.mindnote.domain.model.NoteFilter
 
 sealed interface NotesIntent : UiIntent {
@@ -21,11 +20,9 @@ data class NotesState(
     val filter: NoteFilter,
     val tags: List<String>,
     val activeTag: String,
-    val notes: List<Note>,
     val favoriteIds: Set<String> = emptySet(),
     val query: String = "",
     val isSearching: Boolean = false,
-    val isSyncing: Boolean = false,
 ) : UiState
 
 sealed interface NotesEffect : UiEffect {

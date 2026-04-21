@@ -1,6 +1,8 @@
 package com.mindnote.util
 
+import androidx.paging.PagingData
 import com.mindnote.domain.model.Note
+import com.mindnote.domain.model.NoteFilter
 import com.mindnote.domain.repository.FavoritesRepository
 import com.mindnote.domain.repository.NotesRepository
 import com.mindnote.domain.repository.UserRepository
@@ -10,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
@@ -30,24 +33,41 @@ fun sampleNote(
 class FakeNotesRepository(initial: List<Note> = emptyList()) : NotesRepository {
     private val _notes = MutableStateFlow(initial)
     val created: MutableList<Note> = mutableListOf()
-    var refreshCount = 0
+    val deleted: MutableList<String> = mutableListOf()
+    var syncCount = 0
 
-    override val notes: Flow<List<Note>> = _notes.asStateFlow()
+    /** When non-null, [create] / [delete] / [syncFirstPage] will throw this. */
+    var nextFailure: Throwable? = null
+
+    override fun notesPager(filter: NoteFilter, tag: String, query: String): Flow<PagingData<Note>> =
+        _notes.map { list -> PagingData.from(list.sortedByDescending { it.date }) }
+
+    override fun observeRecent(limit: Int): Flow<List<Note>> =
+        _notes.map { list -> list.sortedByDescending { it.date }.take(limit) }
+
+    override fun observeDistinctTags(): Flow<List<String>> =
+        _notes.map { list -> list.flatMap { it.tags }.distinct().sorted() }
+
+    override fun observeCount(): Flow<Int> = _notes.map { it.size }
 
     override fun observeNote(id: String): Flow<Note?> =
         _notes.map { list -> list.firstOrNull { it.id == id } }.distinctUntilChanged()
 
     override suspend fun create(note: Note) {
+        nextFailure?.let { nextFailure = null; throw it }
         created += note
         _notes.update { listOf(note) + it }
     }
 
     override suspend fun delete(id: String) {
+        nextFailure?.let { nextFailure = null; throw it }
+        deleted += id
         _notes.update { list -> list.filterNot { it.id == id } }
     }
 
-    override suspend fun refresh() {
-        refreshCount++
+    override suspend fun syncFirstPage(limit: Int) {
+        nextFailure?.let { nextFailure = null; throw it }
+        syncCount++
     }
 
     fun setNotes(list: List<Note>) {

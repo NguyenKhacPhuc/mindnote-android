@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 
 val LocalMindNoteColors: ProvidableCompositionLocal<MindNoteColors> =
     staticCompositionLocalOf { LightColors }
@@ -38,9 +39,22 @@ object MindNoteTheme {
         @Composable get() = LocalSnackbarHostState.current
 }
 
+/** Soft pastels chosen to keep text contrast and preserve the accent's visual weight. */
+private val randomBgPalette = listOf(
+    Color(0xFFFFFFFF), // white
+    Color(0xFFFBF9F4), // cream
+    Color(0xFFF4F8FD), // pale blue
+    Color(0xFFFAF4F9), // pale rose
+    Color(0xFFF5FAF5), // pale mint
+    Color(0xFFFFFBF0), // warm ivory
+    Color(0xFFF6F4FD), // pale lavender
+    Color(0xFFFDF8F3), // peach
+)
+
 @Composable
 fun MindNoteTheme(content: @Composable () -> Unit) {
-    val colors = LightColors
+    val randomBg = remember { randomBgPalette.random() }
+    val colors = LightColors.copy(bg = randomBg)
     val snackbarHostState = remember { SnackbarHostState() }
     val material = lightColorScheme(
         background = colors.bg,

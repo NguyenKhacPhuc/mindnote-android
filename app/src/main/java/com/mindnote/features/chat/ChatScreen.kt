@@ -42,6 +42,10 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import com.mindnote.R
 import com.mindnote.design.AiAvatar
 import com.mindnote.design.HSpace
@@ -59,7 +63,8 @@ fun ChatScreen(
     onBack: () -> Unit,
     vm: ChatViewModel = koinViewModel(parameters = { parametersOf(conversationId) }),
 ) {
-    val state by vm.state.collectAsStateWithLifecycle()
+    val liveMessages by vm.liveMessages.collectAsStateWithLifecycle()
+    val history = vm.historyPager.collectAsLazyPagingItems()
 
     LaunchedEffect(Unit) {
         vm.effects.collectLatest { effect ->
@@ -77,7 +82,11 @@ fun ChatScreen(
         }
     }
 
-    var inputText by remember { mutableStateOf(state.input) }
+    var inputText by remember { mutableStateOf("") }
+
+    val isInitialLoading = history.loadState.refresh is LoadState.Loading &&
+        history.itemCount == 0 &&
+        liveMessages.isEmpty()
 
     Column(
         modifier = Modifier
@@ -114,7 +123,7 @@ fun ChatScreen(
 
         HairlineDivider()
 
-        if (state.isLoading && state.messages.isEmpty()) {
+        if (isInitialLoading) {
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -134,11 +143,38 @@ fun ChatScreen(
                     .fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
+                reverseLayout = true,
             ) {
-                items(state.messages, key = { it.id }) { message ->
-                    when (message.role) {
-                        ChatMessage.Role.User -> UserBubble(message)
-                        ChatMessage.Role.Assistant -> AssistantBubble(message)
+                // Session-local messages at the bottom. LazyColumn(reverseLayout=true) renders
+                // index 0 at the bottom, so reverse to keep chronological order on screen.
+                items(
+                    items = liveMessages.asReversed(),
+                    key = { it.id },
+                    contentType = { "chat-msg" },
+                ) { message -> MessageRow(message) }
+
+                // Paged history above — server returns newest-first, matching reverseLayout.
+                items(
+                    count = history.itemCount,
+                    key = history.itemKey { it.id },
+                    contentType = history.itemContentType { "chat-msg" },
+                ) { index ->
+                    val message = history[index] ?: return@items
+                    MessageRow(message)
+                }
+
+                if (history.loadState.append is LoadState.Loading) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(
+                                color = MindNoteTheme.colors.accent,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
                 }
             }
@@ -200,6 +236,14 @@ fun ChatScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun MessageRow(message: ChatMessage) {
+    when (message.role) {
+        ChatMessage.Role.User -> UserBubble(message)
+        ChatMessage.Role.Assistant -> AssistantBubble(message)
     }
 }
 

@@ -1,5 +1,6 @@
 package com.mindnote.core.di
 
+import android.util.Log
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -60,7 +61,8 @@ val appModule = module {
     single { get<MindNoteDatabase>().favoriteDao() }
 
     single {
-        val userPrefs = get<UserPrefs>()
+        val deviceId = get<UserPrefs>().deviceIdBlocking()
+        Log.i("MindNote", "Device ID: $deviceId")
         HttpClient(OkHttp) {
             expectSuccess = true
             install(ContentNegotiation) {
@@ -77,14 +79,14 @@ val appModule = module {
             defaultRequest {
                 url(BuildConfig.BASE_URL)
                 contentType(ContentType.Application.Json)
-                header("X-Device-Id", userPrefs.deviceIdBlocking())
+                header("X-Device-Id", deviceId)
             }
         }
     }
     single { NotesApi(get()) }
     single { ChatApi(get()) }
 
-    single<NotesRepository> { RoomNotesRepository(get(), get(), get()) }
+    single<NotesRepository> { RoomNotesRepository(get(), get(), get(), get()) }
     single<FavoritesRepository> { RoomFavoritesRepository(get(), get()) }
     single<UserRepository> { LocalUserRepository(get(), get()) }
 

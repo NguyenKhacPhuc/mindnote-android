@@ -1,6 +1,8 @@
 package com.mindnote.features.notes
 
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.mindnote.core.ext.Result
 import com.mindnote.core.ext.safeApiCall
 import com.mindnote.core.ext.userMessage
@@ -9,11 +11,14 @@ import com.mindnote.domain.model.Note
 import com.mindnote.domain.model.NoteFilter
 import com.mindnote.domain.repository.FavoritesRepository
 import com.mindnote.domain.repository.NotesRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class NotesViewModel(
     private val notesRepository: NotesRepository,
     private val favoritesRepository: FavoritesRepository,
@@ -22,37 +27,21 @@ class NotesViewModel(
         filter = NoteFilter.All,
         tags = listOf("all"),
         activeTag = "all",
-        notes = emptyList(),
     ),
 ) {
     private val filterFlow = MutableStateFlow(NoteFilter.All)
     private val tagFlow = MutableStateFlow("all")
     private val queryFlow = MutableStateFlow("")
 
+    val notesPager: Flow<PagingData<Note>> =
+        combine(filterFlow, tagFlow, queryFlow) { f, t, q -> Triple(f, t, q) }
+            .flatMapLatest { (f, t, q) -> notesRepository.notesPager(f, t, q) }
+            .cachedIn(viewModelScope)
+
     init {
         viewModelScope.launch {
-            combine(
-                filterFlow.flatMapLatest { filter ->
-                    when (filter) {
-                        NoteFilter.Favorites -> favoritesRepository.observeFavorites()
-                        else -> notesRepository.notes
-                    }
-                },
-                tagFlow,
-                queryFlow,
-            ) { source, tag, query ->
-                source
-                    .let { if (tag == "all") it else it.filter { note -> tag in note.tags } }
-                    .let { if (query.isBlank()) it else it.filter { note -> note.matches(query) } }
-                    .sortedByDescending { it.date }
-            }.collect { notes ->
-                setState { copy(notes = notes) }
-            }
-        }
-        viewModelScope.launch {
-            notesRepository.notes.collect { all ->
-                val tags = listOf("all") + all.flatMap { it.tags }.distinct().sorted()
-                setState { copy(tags = tags) }
+            notesRepository.observeDistinctTags().collect { topics ->
+                setState { copy(tags = listOf("all") + topics) }
             }
         }
         viewModelScope.launch {
@@ -61,12 +50,7 @@ class NotesViewModel(
             }
         }
         viewModelScope.launch {
-            setState { copy(isSyncing = true) }
-            runCatching {
-                notesRepository.refresh()
-                favoritesRepository.refresh()
-            }
-            setState { copy(isSyncing = false) }
+            runCatching { favoritesRepository.refresh() }
         }
     }
 
@@ -100,11 +84,4 @@ class NotesViewModel(
             NotesIntent.GoBack -> emit(NotesEffect.NavigateBack)
         }
     }
-}
-
-private fun Note.matches(query: String): Boolean {
-    return title.contains(query, ignoreCase = true) ||
-        preview.contains(query, ignoreCase = true) ||
-        body.contains(query, ignoreCase = true) ||
-        tags.any { it.contains(query, ignoreCase = true) }
 }

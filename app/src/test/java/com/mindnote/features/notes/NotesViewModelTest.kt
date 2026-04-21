@@ -20,6 +20,10 @@ class NotesViewModelTest {
     @get:Rule
     val mainRule = MainDispatcherRule()
 
+    // Filter/tag/query results live in SQL (NoteDao.pagingFiltered) + PagingSource, so
+    // the notes-order/filter behavior is covered by DAO/integration tests rather than here.
+    // These unit tests cover the state-machine slice of the ViewModel.
+
     private val notes = listOf(
         sampleNote("a", tags = listOf("work"), date = LocalDate.of(2026, 3, 3)),
         sampleNote("b", tags = listOf("reading"), date = LocalDate.of(2026, 3, 5)),
@@ -33,28 +37,16 @@ class NotesViewModelTest {
     }
 
     @Test
-    fun `initial state shows all notes sorted by date descending`() = runTest {
-        val vm = NotesViewModel(FakeNotesRepository(notes), FakeFavoritesRepository())
-        assertEquals(listOf("b", "a", "c"), vm.state.value.notes.map { it.id })
-    }
-
-    @Test
-    fun `selecting a tag filters the visible notes`() = runTest {
+    fun `SelectTag updates activeTag`() = runTest {
         val vm = NotesViewModel(FakeNotesRepository(notes), FakeFavoritesRepository())
         vm.send(NotesIntent.SelectTag("work"))
-        assertEquals(listOf("a", "c"), vm.state.value.notes.map { it.id })
         assertEquals("work", vm.state.value.activeTag)
     }
 
     @Test
-    fun `switching filter to Favorites swaps data source`() = runTest {
-        val favs = FakeFavoritesRepository(initial = setOf("b"))
-        favs.setNotesSource(notes)
-
-        val vm = NotesViewModel(FakeNotesRepository(notes), favs)
+    fun `SelectFilter updates filter`() = runTest {
+        val vm = NotesViewModel(FakeNotesRepository(notes), FakeFavoritesRepository())
         vm.send(NotesIntent.SelectFilter(NoteFilter.Favorites))
-
-        assertEquals(listOf("b"), vm.state.value.notes.map { it.id })
         assertEquals(NoteFilter.Favorites, vm.state.value.filter)
     }
 
