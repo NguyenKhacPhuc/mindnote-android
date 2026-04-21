@@ -1,5 +1,3 @@
-import java.util.Properties
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -19,12 +17,11 @@ android {
         versionCode = 1
         versionName = "0.1.0"
 
-        val localProps = Properties().apply {
-            val f = rootProject.file("local.properties")
-            if (f.exists()) f.inputStream().use { load(it) }
-        }
-        val apiUrl = localProps.getProperty("MINDNOTE_API_URL") ?: "http://10.0.2.2:8080/"
-        buildConfigField("String", "BASE_URL", "\"$apiUrl\"")
+        buildConfigField(
+            "String",
+            "BASE_URL",
+            "\"https://api-production-6707b.up.railway.app/\"",
+        )
     }
 
     buildTypes {

@@ -25,16 +25,13 @@ An Android notes + AI‑chat app. Capture short notes locally, keep them in sync
 - Android SDK 34
 - An Android device or emulator on API 26+
 
-### Configure the backend URL
+The backend URL is baked into the build via `BuildConfig.BASE_URL`, currently pointing at the hosted instance:
 
-Create or edit `local.properties` at the project root and add your running backend's URL:
-
-```properties
-sdk.dir=/absolute/path/to/Android/sdk
-MINDNOTE_API_URL=https://your-backend.example.com/
+```
+https://api-production-6707b.up.railway.app/
 ```
 
-If the key is missing, `BuildConfig.BASE_URL` defaults to `http://10.0.2.2:8080/` (Android emulator ↔ localhost on the host).
+If you need to point at a different backend, edit the `buildConfigField("String", "BASE_URL", …)` line in `app/build.gradle.kts` and rebuild.
 
 ### Build + run
 
@@ -178,15 +175,13 @@ All user‑visible strings live in `res/values/strings.xml` and are referenced v
 
 ## Backend
 
-The app is paired with a Ktor + Postgres backend (separate repo/project) exposing:
+The app is paired with a Ktor + Postgres backend (separate repo/project) deployed at `https://api-production-6707b.up.railway.app/` and exposing:
 
 - `GET /notes` / `GET /notes/{id}` / `POST /notes` / `DELETE /notes/{id}`
 - `GET /favorites` / `POST /favorites/{noteId}` / `DELETE /favorites/{noteId}`
 - `GET /conversations/{id}/messages` / `POST /conversations/{id}/stream` (SSE)
 
 The SSE endpoint streams Claude Haiku 4.5 completions with the user's notes injected as system context for retrieval‑augmented chat.
-
-Set the backend base URL in `local.properties` via `MINDNOTE_API_URL=…`.
 
 ---
 
