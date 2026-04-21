@@ -145,15 +145,13 @@ fun ChatScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 reverseLayout = true,
             ) {
-                // Session-local messages at the bottom. LazyColumn(reverseLayout=true) renders
-                // index 0 at the bottom, so reverse to keep chronological order on screen.
+
                 items(
                     items = liveMessages.asReversed(),
                     key = { it.id },
                     contentType = { "chat-msg" },
                 ) { message -> MessageRow(message) }
 
-                // Paged history above — server returns newest-first, matching reverseLayout.
                 items(
                     count = history.itemCount,
                     key = history.itemKey { it.id },

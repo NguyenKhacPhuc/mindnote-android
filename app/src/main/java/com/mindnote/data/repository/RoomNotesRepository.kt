@@ -39,6 +39,8 @@ class RoomNotesRepository(
         return Pager(
             config = PagingConfig(
                 pageSize = NotesRemoteMediator.PAGE_SIZE,
+                initialLoadSize = NotesRemoteMediator.PAGE_SIZE,
+                prefetchDistance = 10,
                 enablePlaceholders = false,
             ),
             remoteMediator = NotesRemoteMediator(db, noteDao, topicDao, api),
@@ -83,16 +85,14 @@ class RoomNotesRepository(
 
     override suspend fun syncFirstPage(limit: Int) {
         val page = runCatching { api.listNotes(offset = 0, limit = limit) }.getOrNull() ?: return
+        if (page.isEmpty()) return
         db.withTransaction {
-            noteDao.clearForUser(LOCAL_USER_ID)
-            if (page.isNotEmpty()) {
-                noteDao.insertAll(page.map { it.toEntity() })
-                val topics = page.flatMap { it.topicEntities() }.distinctBy { it.name }
-                if (topics.isNotEmpty()) topicDao.insertTopics(topics)
-                page.forEach { dto ->
-                    topicDao.clearForNote(dto.id)
-                    if (dto.tags.isNotEmpty()) topicDao.insertCrossRefs(dto.crossRefs())
-                }
+            noteDao.insertAll(page.map { it.toEntity() })
+            val topics = page.flatMap { it.topicEntities() }.distinctBy { it.name }
+            if (topics.isNotEmpty()) topicDao.insertTopics(topics)
+            page.forEach { dto ->
+                topicDao.clearForNote(dto.id)
+                if (dto.tags.isNotEmpty()) topicDao.insertCrossRefs(dto.crossRefs())
             }
         }
     }

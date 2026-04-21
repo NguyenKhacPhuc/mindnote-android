@@ -15,7 +15,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        userPrefs.deviceIdBlocking() // seed the X-Device-Id before any HTTP call fires
+        userPrefs.deviceIdBlocking()
         val startDestination = if (userPrefs.isOnboardedBlocking()) Routes.Home else Routes.Onboarding
         enableEdgeToEdge()
         setContent {

@@ -2,6 +2,8 @@ package com.mindnote.features.capture
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -80,12 +82,13 @@ fun CaptureScreen(
                 onSave = { vm.send(CaptureIntent.Save) },
             )
             HairlineDivider()
-            VSpace(24)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp),
             ) {
+                VSpace(24)
                 BasicTextField(
                     value = state.title,
                     onValueChange = { vm.send(CaptureIntent.UpdateTitle(it)) },
@@ -153,6 +156,7 @@ fun CaptureScreen(
                         inner()
                     },
                 )
+                VSpace(24)
             }
         }
 

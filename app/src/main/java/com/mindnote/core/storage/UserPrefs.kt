@@ -33,14 +33,8 @@ class UserPrefs(context: Context) {
         appContext.dataStore.edit { it[ONBOARDED] = value }
     }
 
-    /** Synchronous read for cold-start nav routing. */
     fun isOnboardedBlocking(): Boolean = runBlocking { onboardedFlow.first() }
 
-    /**
-     * Per-install identifier, generated once on first call and persisted forever (until the user
-     * clears app data / uninstalls). Sent as the `X-Device-Id` header so the backend can scope
-     * notes, favorites, and conversations to this install.
-     */
     fun deviceIdBlocking(): String {
         cachedDeviceId?.let { return it }
         val id = runBlocking {

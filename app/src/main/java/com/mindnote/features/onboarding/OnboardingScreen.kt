@@ -4,6 +4,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -79,14 +81,19 @@ fun OnboardingScreen(
             StepDot(active = state.step == 1)
         }
 
-        Spacer(Modifier.height(48.dp))
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
+        ) {
+            Spacer(Modifier.height(48.dp))
 
-        when (state.step) {
-            0 -> OptionsStep(state, onSelect = { vm.send(OnboardingIntent.SelectOption(it)) })
-            else -> UsernameStep(state, onUpdate = { vm.send(OnboardingIntent.UpdateUsername(it)) })
+            when (state.step) {
+                0 -> OptionsStep(state, onSelect = { vm.send(OnboardingIntent.SelectOption(it)) })
+                else -> UsernameStep(state, onUpdate = { vm.send(OnboardingIntent.UpdateUsername(it)) })
+            }
         }
-
-        Spacer(Modifier.weight(1f))
 
         Button(
             onClick = { vm.send(OnboardingIntent.Continue) },

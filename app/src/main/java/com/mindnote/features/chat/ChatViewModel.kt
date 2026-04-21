@@ -26,12 +26,16 @@ class ChatViewModel(
 ) : MviViewModel<ChatIntent, ChatState, ChatEffect>(initial = ChatState()) {
 
     private val _liveMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
-    /** Messages sent or streamed during this session, chronological. Rendered on top of paged history. */
+
     val liveMessages: StateFlow<List<ChatMessage>> = _liveMessages.asStateFlow()
 
-    /** Paged server-side history, newest-first. */
     val historyPager: Flow<PagingData<ChatMessage>> = Pager(
-        config = PagingConfig(pageSize = PAGE_SIZE, enablePlaceholders = false),
+        config = PagingConfig(
+            pageSize = PAGE_SIZE,
+            initialLoadSize = PAGE_SIZE,
+            prefetchDistance = 10,
+            enablePlaceholders = false,
+        ),
         pagingSourceFactory = { ChatPagingSource(chatApi, conversationId) },
     ).flow
         .map { data -> data.map { it.toDomain() } }

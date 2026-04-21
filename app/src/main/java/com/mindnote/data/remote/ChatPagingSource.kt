@@ -5,10 +5,6 @@ import androidx.paging.PagingState
 import io.ktor.client.plugins.ResponseException
 import java.io.IOException
 
-/**
- * Network-only cursor pager over chat history, newest-first.
- * The page key is the `before` cursor — i.e. the oldest `createdAt` the client has seen.
- */
 class ChatPagingSource(
     private val api: ChatApi,
     private val conversationId: String,

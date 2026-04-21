@@ -259,4 +259,3 @@ private fun NoteBodySection(body: String) {
         )
     }
 }
-

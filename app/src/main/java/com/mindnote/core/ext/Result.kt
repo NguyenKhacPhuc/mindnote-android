@@ -73,7 +73,6 @@ suspend fun <T> Result<T>.handleSuspend(
     }
 }
 
-/** Wraps a suspending API call and funnels any thrown exception into [Result.Error]. */
 suspend inline fun <T> safeApiCall(crossinline block: suspend () -> T): Result<T> = try {
     Result.Success(block())
 } catch (t: Throwable) {
@@ -81,7 +80,6 @@ suspend inline fun <T> safeApiCall(crossinline block: suspend () -> T): Result<T
     t.toResult()
 }
 
-/** Map any Throwable into a typed [Result.Error] — parses server `ErrorModel` JSON on 4xx. */
 suspend fun Throwable.toResult(): Result.Error = try {
     when (this) {
         is ClientRequestException -> {
@@ -106,7 +104,6 @@ suspend fun Throwable.toResult(): Result.Error = try {
     Result.Error(ApiError.UNKNOWN, "", e)
 }
 
-/** Turn a `Flow<T>` into a `Flow<Result<T>>` that emits Loading → Success / Error. */
 inline fun <reified T> Flow<T>.asResult(): Flow<Result<T>> =
     map<T, Result<T>> { Result.Success(it) }
         .onStart { emit(Result.Loading) }
@@ -115,7 +112,6 @@ inline fun <reified T> Flow<T>.asResult(): Flow<Result<T>> =
             emit(t.toResult())
         }
 
-/** Hook point for crash reporting — currently logs to Logcat. Swap for Crashlytics etc. when wired. */
 fun Throwable.logAsNonFatal() {
     Log.e(LOG_TAG, message.orEmpty(), this)
 }

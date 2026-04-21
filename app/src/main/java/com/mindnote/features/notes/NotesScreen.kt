@@ -114,7 +114,7 @@ fun NotesScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // Header, filter tabs, divider, tag rail all span the full grid width.
+
             item(span = { GridItemSpan(maxLineSpan) }) {
                 VSpace(4)
                 if (state.isSearching) {
@@ -156,18 +156,15 @@ fun NotesScreen(
             item(span = { GridItemSpan(maxLineSpan) }) { HairlineDivider() }
             item(span = { GridItemSpan(maxLineSpan) }) {
                 VSpace(4)
-                RowWithSpaceBetween {
-                    LazyRow(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        items(state.tags) { tag ->
-                            Box(modifier = Modifier.clickable { vm.send(NotesIntent.SelectTag(tag)) }) {
-                                TagChip(label = stringResource(R.string.tag_format, tag), active = tag == state.activeTag)
-                            }
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(state.tags) { tag ->
+                        Box(modifier = Modifier.clickable { vm.send(NotesIntent.SelectTag(tag)) }) {
+                            TagChip(label = stringResource(R.string.tag_format, tag), active = tag == state.activeTag)
                         }
                     }
-                    TrackedCaps(stringResource(R.string.notes_count_suffix, notes.itemCount))
                 }
             }
             if (isInitialLoading) {

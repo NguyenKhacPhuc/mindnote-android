@@ -14,10 +14,6 @@ import kotlinx.coroutines.flow.channelFlow
 
 class ChatApi(private val client: HttpClient) {
 
-    /**
-     * Load a page of messages newest-first. Pass [before] = oldest known `createdAt`
-     * to fetch the previous (older) page. Fewer than [limit] results signals end-of-history.
-     */
     suspend fun messages(
         conversationId: String,
         before: Long? = null,

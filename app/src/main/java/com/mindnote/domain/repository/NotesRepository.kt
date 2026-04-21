@@ -14,9 +14,5 @@ interface NotesRepository {
     suspend fun create(note: Note)
     suspend fun delete(id: String)
 
-    /**
-     * Prime Room with the newest page so non-paged consumers (home recents, tag chips, count)
-     * have data before the Notes screen opens. Idempotent and safe to call on every launch.
-     */
     suspend fun syncFirstPage(limit: Int = 30)
 }

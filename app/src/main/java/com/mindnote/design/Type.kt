@@ -21,7 +21,7 @@ data class MindNoteTypography(
     val button: TextStyle,
 )
 
-private val Sans: FontFamily = FontFamily.Default // replace with Inter via Google Fonts downloadable fonts when wired
+private val Sans: FontFamily = FontFamily.Default
 
 val AppTypography = MindNoteTypography(
     h1 = TextStyle(fontFamily = Sans, fontWeight = FontWeight.SemiBold, fontSize = 28.sp, lineHeight = 34.sp),

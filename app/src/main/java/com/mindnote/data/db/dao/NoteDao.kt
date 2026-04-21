@@ -45,9 +45,6 @@ interface NoteDao {
     )
     fun observeRecent(userId: String, limit: Int): Flow<List<NoteWithTopics>>
 
-    /**
-     * Distinct tag list across the user's notes. Returns topic names actually in use.
-     */
     @Query(
         """
         SELECT DISTINCT ct.topicName FROM note_topics ct
@@ -58,13 +55,6 @@ interface NoteDao {
     )
     fun observeDistinctTags(userId: String): Flow<List<String>>
 
-    /**
-     * Single paged query that applies all notes-screen filters in SQL.
-     *
-     * - [favoritesOnly] = 1 joins favorites and keeps only matching notes.
-     * - [tag] = "all" disables the tag filter; otherwise keeps notes tagged with [tag].
-     * - [query] = "" disables search; otherwise LIKE against title/preview/body.
-     */
     @Transaction
     @Query(
         """

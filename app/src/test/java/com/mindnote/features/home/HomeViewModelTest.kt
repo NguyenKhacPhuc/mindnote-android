@@ -40,7 +40,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `recents contains 3 most-recent notes and summary counts all`() = runTest {
+    fun `recents contains 3 most-recent notes sorted by date descending`() = runTest {
         val notes = listOf(
             sampleNote("a", date = LocalDate.of(2026, 3, 1)),
             sampleNote("b", date = LocalDate.of(2026, 3, 5)),
@@ -49,9 +49,7 @@ class HomeViewModelTest {
         )
         val vm = HomeViewModel(FakeUserRepository(), FakeNotesRepository(notes))
 
-        val state = vm.state.value
-        assertEquals(listOf("d", "b", "c"), state.recents.map { it.id })
-        assertTrue(state.summary.contains("4 notes"))
+        assertEquals(listOf("d", "b", "c"), vm.state.value.recents.map { it.id })
     }
 
     @Test

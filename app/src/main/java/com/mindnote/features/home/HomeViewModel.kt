@@ -6,7 +6,6 @@ import com.mindnote.domain.model.SuggestedPrompt
 import com.mindnote.domain.repository.NotesRepository
 import com.mindnote.domain.repository.UserRepository
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.time.LocalTime
 
@@ -16,7 +15,6 @@ class HomeViewModel(
 ) : MviViewModel<HomeIntent, HomeState, HomeEffect>(
     initial = HomeState(
         greeting = greetingFor(name = ""),
-        summary = "",
         input = "",
         prompts = listOf(
             SuggestedPrompt("p1", "Summarize today's notes"),
@@ -34,11 +32,8 @@ class HomeViewModel(
             }
         }
         viewModelScope.launch {
-            combine(
-                notesRepository.observeRecent(limit = 3),
-                notesRepository.observeCount(),
-            ) { recents, count -> recents to count }.collectLatest { (recents, count) ->
-                setState { copy(recents = recents, summary = "You have $count notes.") }
+            notesRepository.observeRecent(limit = 3).collectLatest { recents ->
+                setState { copy(recents = recents) }
             }
         }
         viewModelScope.launch {

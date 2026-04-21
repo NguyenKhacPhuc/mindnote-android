@@ -18,7 +18,6 @@ sealed interface HomeIntent : UiIntent {
 
 data class HomeState(
     val greeting: String,
-    val summary: String,
     val input: String,
     val prompts: List<SuggestedPrompt>,
     val recents: List<Note>,

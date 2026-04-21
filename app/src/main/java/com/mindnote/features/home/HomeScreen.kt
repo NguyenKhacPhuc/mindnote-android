@@ -95,8 +95,6 @@ fun HomeScreen(
             item {
                 VSpace(20)
                 Text(state.greeting, style = MindNoteTheme.typography.title, color = MindNoteTheme.colors.text)
-                VSpace(4)
-                Text(state.summary, style = MindNoteTheme.typography.bodySmall, color = MindNoteTheme.colors.textMuted)
             }
             item {
                 VSpace(24)
